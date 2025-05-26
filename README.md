@@ -17,7 +17,7 @@ A simple web-based tool to send messages to Instagram users.
    python app.py
    ```
 
-2. Open your web browser and go to `http://localhost:5000`
+2. Open your web browser and go to `http://127.0.0.1:3000`
 
 3. On the web interface:
    - Enter your Instagram username and password
