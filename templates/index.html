@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaDM Pro ✨ - Campaign Setup</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg-color: #ffffff;
+            --text-color: #1a1a1a;
+            --primary-color: #0066ff;
+            --primary-hover-color: #0052cc;
+            --border-color: #e5e7eb;
+            --input-bg-color: #f9fafb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --border-radius: 16px;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 100% 100%, rgba(0, 102, 255, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 40px 20px;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            min-height: 100vh;
+            box-sizing: border-box;
+        }
+
+        .main-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: var(--card-bg-color);
+            padding: 40px;
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+            animation: fadeInScaleUp 0.6s cubic-bezier(0.165, 0.84, 0.44, 1);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+
+        @keyframes fadeInScaleUp {
+            from { opacity: 0; transform: scale(0.98) translateY(10px); }
+            to { opacity: 1; transform: scale(1) translateY(0); }
+        }
+        
+        .form-header {
+            text-align: center;
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        .logo-container {
+            margin-bottom: 25px;
+            position: relative;
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 20px;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .logo-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 6px rgba(0, 102, 255, 0.2));
+        }
+
+        .logo-text {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;
+        }
+
+        .logo-tagline {
+            font-size: 1.1rem;
+            color: #666;
+            margin: 0;
+            line-height: 1.6;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+
+        .form-header h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            color: var(--text-color);
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .form-header .icon {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .form-header p {
+            font-size: 1.1rem;
+            color: #666;
+            margin-bottom: 0;
+            line-height: 1.6;
+        }
+
+        .form-section {
+            margin-bottom: 35px;
+            background: var(--input-bg-color);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .section-title {
+            font-size: 1.4rem;
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .section-title i {
+            color: var(--primary-color);
+        }
+
+        .account-card {
+            background-color: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            margin-bottom: 25px;
+            position: relative;
+            animation: slideIn 0.5s ease-out forwards;
+            opacity: 0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            /* Debugging border */
+            border: 2px dashed red;
+        }
+
+        .account-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 12px -1px rgba(0, 0, 0, 0.15);
+        }
+        
+        .account-card.removing {
+            animation: slideOut 0.5s ease-out forwards !important;
+        }
+
+        .form-group {
+            margin-bottom: 25px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 500;
+            margin-bottom: 10px;
+            font-size: 0.95rem;
+            color: #444;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 14px 18px;
+            font-size: 1rem;
+            border-radius: 12px;
+            border: 2px solid var(--border-color);
+            background-color: var(--card-bg-color);
+            color: var(--text-color);
+            transition: all 0.2s ease;
+            box-sizing: border-box;
+        }
+
+        .form-control:focus {
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 4px rgba(0, 102, 255, 0.1);
+            outline: none;
+            background-color: #fff;
+        }
+        
+        .form-control::placeholder {
+            color: #999;
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+            line-height: 1.6;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            font-size: 1rem;
+            font-weight: 600;
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            border: none;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color));
+            color: #fff;
+            box-shadow: 0 4px 6px rgba(0, 102, 255, 0.2);
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 102, 255, 0.25);
+        }
+
+        .btn-danger-outline {
+            background-color: transparent;
+            color: var(--danger-color);
+            border: 2px solid var(--danger-color);
+            box-shadow: none;
+        }
+
+        .btn-danger-outline:hover {
+            background-color: var(--danger-color);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+
+        .file-upload {
+            position: relative;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            padding: 30px;
+            border: 2px dashed var(--border-color);
+            border-radius: var(--border-radius);
+            background: var(--card-bg-color);
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+
+        .file-upload:hover {
+            border-color: var(--primary-color);
+            background: rgba(0, 102, 255, 0.02);
+        }
+
+        .file-upload i {
+            font-size: 2.5rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+        }
+
+        .file-upload-text {
+            font-size: 1.1rem;
+            color: #666;
+            text-align: center;
+            margin-bottom: 10px;
+        }
+
+        .file-upload input[type="file"] {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            top: 0;
+            left: 0;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            margin-left: 8px;
+            color: #666;
+        }
+
+        .tooltip:hover::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 12px;
+            background: #333;
+            color: #fff;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            white-space: nowrap;
+            z-index: 1;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translate(-50%, 5px); }
+            to { opacity: 1; transform: translate(-50%, 0); }
+        }
+
+        /* Add loading spinner */
+        .loading-spinner {
+            display: none;
+            width: 30px;
+            height: 30px;
+            border: 3px solid var(--border-color);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Add success message styling */
+        .success-message {
+            display: none;
+            background: var(--success-color);
+            color: white;
+            padding: 15px 20px;
+            border-radius: var(--border-radius);
+            margin-top: 20px;
+            text-align: center;
+            animation: slideDown 0.3s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+    </style>
+</head>
+<body>
+    <div class="main-container">
+        <div class="form-header">
+            <div class="logo-container">
+                <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Main circle -->
+                    <circle cx="50" cy="50" r="45" fill="url(#gradient-bg)" />
+                    
+                    <!-- Message bubble -->
+                    <path d="M65 35H35C33.3431 35 32 36.3431 32 38V57C32 58.6569 33.3431 60 35 60H42L50 68L58 60H65C66.6569 60 68 58.6569 68 57V38C68 36.3431 66.6569 35 65 35Z" fill="white" />
+                    
+                    <!-- Sparkles -->
+                    <g class="sparkles" fill="white" opacity="0.8">
+                        <circle cx="25" cy="25" r="2">
+                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="75" cy="25" r="2">
+                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.3s" />
+                        </circle>
+                        <circle cx="75" cy="75" r="2">
+                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.6s" />
+                        </circle>
+                        <circle cx="25" cy="75" r="2">
+                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.9s" />
+                        </circle>
+                    </g>
+                    
+                    <!-- Lightning bolt inside message bubble -->
+                    <path d="M53 42L45 50H55L47 58" stroke="url(#gradient-bolt)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <animate attributeName="stroke-dasharray" values="0,100;100,0" dur="2s" repeatCount="indefinite" />
+                    </path>
+                    
+                    <!-- Gradients -->
+                    <defs>
+                        <linearGradient id="gradient-bg" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#0066ff" />
+                            <stop offset="100%" stop-color="#10b981" />
+                        </linearGradient>
+                        <linearGradient id="gradient-bolt" x1="45" y1="42" x2="55" y2="58" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#0066ff" />
+                            <stop offset="100%" stop-color="#10b981" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1 class="logo-text">InstaDM Pro</h1>
+            <p class="logo-tagline">Streamline your Instagram messaging with powerful automation</p>
+        </div>
+
+        <form id="campaignForm" method="POST" enctype="multipart/form-data">
+            <!-- Hidden fields for backend compatibility -->
+            <input type="hidden" name="num_accounts_to_submit" id="num_accounts_to_submit" value="1">
+            <input type="hidden" name="delay_seconds" value="30">
+            
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-user-circle"></i>
+                    Account Setup
+                </h2>
+                <div id="accounts-container">
+                    <div class="account-card" style="opacity: 1;">
+                        <div class="form-group">
+                            <label class="form-label">
+                                Instagram Username
+                                <span class="tooltip" data-tooltip="Enter your Instagram account username">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </label>
+                            <input type="text" class="form-control" name="username_0" placeholder="e.g., youraccount" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">
+                                Instagram Password
+                                <span class="tooltip" data-tooltip="Your password is securely handled">
+                                    <i class="fas fa-info-circle"></i>
+                                </span>
+                            </label>
+                            <input type="password" class="form-control" name="password_0" required>
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Upload Username List for this Account</label>
+                            <div class="file-upload">
+                                <i class="fas fa-cloud-upload-alt"></i>
+                                <div class="file-upload-text">
+                                    <strong>Choose a file</strong> or drag it here
+                                    <p style="font-size: 0.9rem; margin-top: 5px;">Supported formats: .txt (one username per line), .csv, .xlsx (Excel)</p>
+                                </div>
+                                <input type="file" name="leads_file_0" accept=".txt,.csv,.xlsx" required>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <button type="button" class="btn btn-primary" id="addAccountBtn" style="margin-top: 15px;">
+                    <i class="fas fa-plus"></i>
+                    Add Another Account
+                </button>
+            </div>
+
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-envelope"></i>
+                    Message Template
+                </h2>
+                <div class="form-group">
+                    <label class="form-label">
+                        Your Message
+                        <span class="tooltip" data-tooltip="Use {name} to personalize the message">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                    </label>
+                    <textarea class="form-control" name="message_template" placeholder="Hey {name}! ..." required></textarea>
+                </div>
+            </div>
+
+            <div style="text-align: center;">
+                <button type="submit" class="btn btn-primary">
+                    <i class="fas fa-rocket"></i>
+                    Launch Campaign
+                </button>
+            </div>
+
+            <div class="loading-spinner"></div>
+            <div class="success-message">Campaign started successfully!</div>
+        </form>
+    </div>
+
+    <script>
+                // File upload preview        function setupFileUploadPreview() {            const fileInputs = document.querySelectorAll('input[type="file"]');            fileInputs.forEach(fileInput => {                const fileUpload = fileInput.closest('.file-upload');                const fileUploadText = fileUpload.querySelector('.file-upload-text');                                fileInput.addEventListener('change', function(e) {                    if(this.files && this.files[0]) {                        fileUploadText.innerHTML = `<strong>${this.files[0].name}</strong><p style="font-size: 0.9rem; margin-top: 5px;">File selected successfully</p>`;                        fileUpload.style.borderColor = 'var(--success-color)';                    }                });            });        }        // Initial setup        setupFileUploadPreview();        // Form submission handling        const form = document.getElementById('campaignForm');        const loadingSpinner = document.querySelector('.loading-spinner');        const successMessage = document.querySelector('.success-message');        form.addEventListener('submit', function(e) {            // Don't prevent default - let the form submit normally            loadingSpinner.style.display = 'block';            successMessage.style.display = 'block';        });
+
+                // Add account form handling        const accountsContainer = document.getElementById('accounts-container');        const addAccountBtn = document.getElementById('addAccountBtn');        const numAccountsInput = document.getElementById('num_accounts_to_submit');        let accountCount = 1;        addAccountBtn.addEventListener('click', function() {            if (accountCount >= 4) {                alert('Maximum 4 accounts allowed');                return;            }            const accountCard = document.createElement('div');            accountCard.className = 'account-card';            accountCard.style.opacity = '1';            accountCard.innerHTML = `                <div class="form-group">                    <label class="form-label">                        Instagram Username                        <span class="tooltip" data-tooltip="Enter your Instagram account username">                            <i class="fas fa-info-circle"></i>                        </span>                    </label>                    <input type="text" class="form-control" name="username_${accountCount}" placeholder="e.g., youraccount" required>                </div>                <div class="form-group">                    <label class="form-label">                        Instagram Password                        <span class="tooltip" data-tooltip="Your password is securely handled">                            <i class="fas fa-info-circle"></i>                        </span>                    </label>                    <input type="password" class="form-control" name="password_${accountCount}" required>                </div>                <div class="form-group">                    <label class="form-label">Upload Username List for this Account</label>                    <div class="file-upload">                        <i class="fas fa-cloud-upload-alt"></i>                        <div class="file-upload-text">                            <strong>Choose a file</strong> or drag it here                            <p style="font-size: 0.9rem; margin-top: 5px;">Supported formats: .txt (one username per line), .csv, .xlsx (Excel)</p>                        </div>                        <input type="file" name="leads_file_${accountCount}" accept=".txt,.csv,.xlsx" required>                    </div>                </div>                <button type="button" class="btn btn-danger-outline remove-account" style="margin-top: 10px;">                    <i class="fas fa-trash"></i>                    Remove Account                </button>            `;                        accountsContainer.appendChild(accountCard);            accountCount++;            numAccountsInput.value = accountCount;            // Setup file upload preview for new account            setupFileUploadPreview();            // Add remove button functionality            accountCard.querySelector('.remove-account').addEventListener('click', function() {                accountCard.remove();                accountCount--;                numAccountsInput.value = accountCount;            });        });
+
+        // Display connected accounts and DM status
+        function updateConnectedAccounts(accounts) {
+            const connectedAccountsContainer = document.getElementById('connectedAccounts');
+            connectedAccountsContainer.innerHTML = '';
+            accounts.forEach(account => {
+                const accountElement = document.createElement('div');
+                accountElement.textContent = `Connected: ${account.username}`;
+                connectedAccountsContainer.appendChild(accountElement);
+            });
+        }
+
+        function updateDMStatus(status) {
+            const dmStatusContainer = document.getElementById('dmStatus');
+            dmStatusContainer.textContent = status;
+        }
+
+        // Example usage (replace with actual data from backend)
+        updateConnectedAccounts([{ username: '@example1' }, { username: '@example2' }]);
+        updateDMStatus('Sending DMs...');
+    </script>
+
+    <div id="connectedAccounts" style="margin-top: 20px;"></div>
+    <div id="dmStatus" style="margin-top: 10px; font-weight: bold;"></div>
+</body>
+</html> 

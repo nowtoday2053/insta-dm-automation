@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>InstaDM Pro ✨ - Campaign Progress</title>
+        <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <style>
+        :root {
+            --bg-color: #f0f2f5;
+            --card-bg-color: #ffffff;
+            --text-color: #1a1a1a;
+            --primary-color: #0066ff;
+            --primary-hover-color: #0052cc;
+            --secondary-color: #6c757d;
+            --border-color: #e5e7eb;
+            --input-bg-color: #f9fafb;
+            --success-color: #10b981;
+            --danger-color: #ef4444;
+            --warning-color: #ffc107;
+            --info-color: #17a2b8;
+            --shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            --border-radius: 16px;
+            --font-family: 'Inter', sans-serif;
+        }
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--bg-color);
+            background-image: 
+                radial-gradient(at 100% 100%, rgba(0, 102, 255, 0.1) 0px, transparent 50%),
+                radial-gradient(at 0% 0%, rgba(16, 185, 129, 0.1) 0px, transparent 50%);
+            color: var(--text-color);
+            margin: 0;
+            padding: 30px 20px;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: flex-start;
+        }
+
+        .container-main {
+            max-width: 1100px;
+            width: 100%;
+            background: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            padding: 30px;
+            box-shadow: var(--shadow);
+            animation: fadeIn 0.5s ease-out;
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(-15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .page-header {
+            text-align: center;
+            margin-bottom: 35px;
+            position: relative;
+        }
+
+        .logo-container {
+            margin-bottom: 25px;
+            position: relative;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 20px;
+            animation: logoFloat 3s ease-in-out infinite;
+        }
+
+        @keyframes logoFloat {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .logo-svg {
+            width: 100%;
+            height: 100%;
+            filter: drop-shadow(0 4px 6px rgba(0, 102, 255, 0.2));
+        }
+
+        .logo-text {
+            font-size: 2.4rem;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            letter-spacing: -0.5px;rm -rf .git
+
+        }
+
+        .page-header h1 {
+            font-size: 2.4rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 10px;
+        }
+        .page-header .icon {
+            font-size: 2.2rem;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            animation: float 3s ease-in-out infinite;
+        }
+
+        @keyframes float {
+            0% { transform: translateY(0px); }
+            50% { transform: translateY(-10px); }
+            100% { transform: translateY(0px); }
+        }
+
+        .status-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 35px;
+        }
+
+        .status-card {
+            background: var(--input-bg-color);
+            padding: 25px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            border: 1px solid var(--border-color);
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .status-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            opacity: 0.7;
+        }
+
+        .status-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow);
+        }
+
+        .status-card .icon {
+            font-size: 2rem;
+            margin-bottom: 15px;
+            background: linear-gradient(135deg, var(--primary-color), var(--success-color));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .status-card h5 {
+            font-size: 0.9rem;
+            color: #666;
+            text-transform: uppercase;
+            margin-bottom: 10px;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        .status-card p {
+            font-size: 1.8rem;
+            font-weight: 700;
+            margin-bottom: 0;
+            color: var(--text-color);
+            line-height: 1;
+        }
+
+        .status-card .trend {
+            font-size: 0.9rem;
+            color: var(--success-color);
+            margin-top: 8px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .progress-section {
+            margin-bottom: 35px;
+            padding: 25px;
+            background-color: var(--input-bg-color);
+            border-radius: var(--border-radius);
+            border: 1px solid var(--border-color);
+        }
+
+        .progress-label {
+            font-size: 1rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-color);
+        }
+
+        .progress-label .percentage {
+            color: var(--primary-color);
+            font-size: 1.1rem;
+        }
+
+        .progress-wrapper {
+            background-color: rgba(0, 0, 0, 0.05);
+            border-radius: 50px;
+            padding: 4px;
+            margin-bottom: 15px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress {
+            height: 24px;
+            font-size: 0.9rem;
+            border-radius: 50px;
+            background-color: transparent;
+            position: relative;
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-color), var(--success-color));
+            font-weight: 600;
+            border-radius: 50px;
+            transition: width 0.4s ease-in-out;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 200%;
+            height: 100%;
+            background: linear-gradient(
+                90deg,
+                rgba(255, 255, 255, 0.15) 25%,
+                transparent 25%,
+                transparent 50%,
+                rgba(255, 255, 255, 0.15) 50%,
+                rgba(255, 255, 255, 0.15) 75%,
+                transparent 75%
+            );
+            background-size: 20px 20px;
+            animation: progress-animation 1s linear infinite;
+        }
+
+        @keyframes progress-animation {
+            0% { transform: translateX(-50%); }
+            100% { transform: translateX(0); }
+        }
+
+        .results-log-container {
+            background-color: var(--input-bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: var(--border-radius);
+            padding: 25px;
+            max-height: 400px;
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .log-header {
+            font-size: 1.3rem;
+            font-weight: 600;
+            margin-bottom: 20px;
+            color: var(--text-color);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .log-header i {
+            color: var(--primary-color);
+        }
+        
+        .result-entry {
+            background: var(--card-bg-color);
+            border: 1px solid var(--border-color);
+            border-left: 4px solid var(--primary-color);
+            border-radius: 12px;
+            padding: 15px 20px;
+            margin-bottom: 12px;
+            display: flex;
+            flex-wrap: wrap;
+            align-items: center;
+            gap: 12px;
+            font-size: 0.95rem;
+            animation: slideInLog 0.4s ease-out;
+            transition: transform 0.2s ease;
+        }
+
+        .result-entry:hover {
+            transform: translateX(5px);
+        }
+
+        @keyframes slideInLog {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .result-entry.success { border-left-color: var(--success-color); }
+        .result-entry.error { border-left-color: var(--danger-color); }
+        .result-entry.info { border-left-color: var(--info-color); }
+        .result-entry.system {
+            border-left-color: var(--warning-color);
+            background-color: rgba(255, 193, 7, 0.05);
+        }
+        
+        .result-entry .timestamp {
+            font-size: 0.85rem;
+            color: #777;
+            font-weight: 500;
+        }
+
+        .result-entry .account {
+            font-weight: 600;
+            color: var(--primary-color);
+            background: rgba(0, 102, 255, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .result-entry .lead {
+            font-weight: 500;
+            color: #555;
+            background: rgba(108, 117, 125, 0.1);
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .result-entry .status-msg {
+            font-style: italic;
+            color: #666;
+            flex-grow: 1;
+        }
+
+        .result-entry .status-icon {
+            font-size: 1.1rem;
+            width: 24px;
+            height: 24px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 50%;
+        }
+
+        .status-icon.success {
+            color: var(--success-color);
+            background: rgba(16, 185, 129, 0.1);
+        }
+
+        .status-icon.error {
+            color: var(--danger-color);
+            background: rgba(239, 68, 68, 0.1);
+        }
+
+        .status-icon.info {
+            color: var(--info-color);
+            background: rgba(23, 162, 184, 0.1);
+        }
+
+        .status-icon.system {
+            color: var(--warning-color);
+            background: rgba(255, 193, 7, 0.1);
+        }
+
+        .page-message {
+            padding: 20px;
+            margin-bottom: 30px;
+            border-radius: var(--border-radius);
+            text-align: center;
+            font-weight: 500;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+        }
+
+        .page-message.info {
+            background-color: rgba(0, 102, 255, 0.1);
+            border: 1px solid rgba(0, 102, 255, 0.2);
+            color: var(--primary-color);
+        }
+
+        .page-message.success {
+            background-color: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.2);
+            color: var(--success-color);
+        }
+
+        .page-message.warning {
+            background-color: rgba(255, 193, 7, 0.1);
+            border: 1px solid rgba(255, 193, 7, 0.2);
+            color: var(--warning-color);
+        }
+
+        .page-message.danger {
+            background-color: rgba(239, 68, 68, 0.1);
+            border: 1px solid rgba(239, 68, 68, 0.2);
+            color: var(--danger-color);
+        }
+
+        .back-button-container {
+            text-align: center;
+            margin-top: 35px;
+        }
+
+        .back-button {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-hover-color));
+            color: #fff;
+            border: none;
+            padding: 14px 32px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1rem;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 6px rgba(0, 102, 255, 0.2);
+        }
+
+        .back-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 8px rgba(0, 102, 255, 0.25);
+            color: #fff;
+        }
+
+        .hidden { display: none !important; }
+
+        /* Custom scrollbar */
+        .results-log-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .results-log-container::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.05);
+            border-radius: 4px;
+        }
+
+        .results-log-container::-webkit-scrollbar-thumb {
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 4px;
+        }
+
+        .results-log-container::-webkit-scrollbar-thumb:hover {
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        /* Responsive adjustments */
+        @media (max-width: 768px) {
+            .container-main {
+                padding: 20px;
+            }
+
+            .status-grid {
+                grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+                gap: 15px;
+            }
+
+            .page-header h1 {
+                font-size: 2rem;
+            }
+
+            .status-card p {
+                font-size: 1.5rem;
+            }
+
+            .result-entry {
+                padding: 12px 15px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container-main">
+        <div class="page-header">
+            <div class="logo-container">
+                <svg class="logo-svg" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <!-- Main circle -->
+                    <circle cx="50" cy="50" r="45" fill="url(#gradient-bg)" />
+                    
+                    <!-- Message bubble -->
+                    <path d="M65 35H35C33.3431 35 32 36.3431 32 38V57C32 58.6569 33.3431 60 35 60H42L50 68L58 60H65C66.6569 60 68 58.6569 68 57V38C68 36.3431 66.6569 35 65 35Z" fill="white" />
+                    
+                    <!-- Sparkles -->
+                    <g class="sparkles" fill="white" opacity="0.8">
+                        <circle cx="25" cy="25" r="2">
+                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" />
+                        </circle>
+                        <circle cx="75" cy="25" r="2">
+                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.3s" />
+                        </circle>
+                        <circle cx="75" cy="75" r="2">
+                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.6s" />
+                        </circle>
+                        <circle cx="25" cy="75" r="2">
+                            <animate attributeName="opacity" values="0.8;0.4;0.8" dur="2s" repeatCount="indefinite" begin="0.9s" />
+                        </circle>
+                    </g>
+                    
+                    <!-- Lightning bolt inside message bubble -->
+                    <path d="M53 42L45 50H55L47 58" stroke="url(#gradient-bolt)" stroke-width="3" stroke-linecap="round" stroke-linejoin="round">
+                        <animate attributeName="stroke-dasharray" values="0,100;100,0" dur="2s" repeatCount="indefinite" />
+                    </path>
+                    
+                    <!-- Gradients -->
+                    <defs>
+                        <linearGradient id="gradient-bg" x1="0" y1="0" x2="100" y2="100" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#0066ff" />
+                            <stop offset="100%" stop-color="#10b981" />
+                        </linearGradient>
+                        <linearGradient id="gradient-bolt" x1="45" y1="42" x2="55" y2="58" gradientUnits="userSpaceOnUse">
+                            <stop offset="0%" stop-color="#0066ff" />
+                            <stop offset="100%" stop-color="#10b981" />
+                        </linearGradient>
+                    </defs>
+                </svg>
+            </div>
+            <h1 class="logo-text">Campaign Dashboard</h1>
+        </div>
+
+        <div id="pageMessage" class="page-message info">
+            <i class="fas fa-info-circle"></i>
+            {{ message|default('Campaign initializing... Stand by for awesomeness!') }}
+        </div>
+
+        <div class="status-grid">
+            <div class="status-card">
+                <div class="icon"><i class="fas fa-layer-group"></i></div>
+                <h5>Total Accounts</h5>
+                <p id="totalAccountsDisplay">{{ total_accounts|default('-') }}</p>
+                <div class="trend">
+                    <i class="fas fa-check-circle"></i>
+                    Active
+                </div>
+            </div>
+            <div class="status-card">
+                <div class="icon"><i class="fas fa-users"></i></div>
+                <h5>Total Leads</h5>
+                <p id="totalCampaignLeadsDisplay">{{ total_leads_overall|default('-') }}</p>
+                <div class="trend">
+                    <i class="fas fa-arrow-up"></i>
+                    Updated
+                </div>
+            </div>
+            <div class="status-card">
+                <div class="icon"><i class="fas fa-paper-plane"></i></div>
+                <h5>Messages Sent</h5>
+                <p id="messagesSentDisplay">{{ messages_sent|default('0') }}</p>
+                <div class="trend">
+                    <i class="fas fa-chart-line"></i>
+                    In Progress
+                </div>
+            </div>
+            <div class="status-card">
+                <div class="icon"><i class="fas fa-clock"></i></div>
+                <h5>Next Message</h5>
+                <p id="nextMessageDisplay">{{ next_message_time|default('30s') }}</p>
+                <div class="trend">
+                    <i class="fas fa-sync-alt fa-spin"></i>
+                    Countdown
+                </div>
+            </div>
+        </div>
+
+        <div class="progress-section">
+            <div class="progress-label">
+                <span>Campaign Progress</span>
+                <span class="percentage" id="progressPercentage">0%</span>
+            </div>
+            <div class="progress-wrapper">
+                <div class="progress">
+                    <div class="progress-bar" id="campaignProgress" style="width: 0%">
+                        <span id="progressText">0/0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="results-log-container">
+            <div class="log-header">
+                <i class="fas fa-list-alt"></i>
+                Activity Log
+            </div>
+            <div id="resultsLog">
+                <!-- Log entries will be dynamically added here -->
+            </div>
+        </div>
+
+        <div class="back-button-container">
+            <a href="/" class="back-button">
+                <i class="fas fa-arrow-left"></i>
+                Back to Campaign Setup
+            </a>
+        </div>
+    </div>
+
+    <script>
+        // Function to update progress bar
+        function updateProgress(current, total) {
+            const percentage = total > 0 ? Math.round((current / total) * 100) : 0;
+            const progressBar = document.getElementById('campaignProgress');
+            const progressText = document.getElementById('progressText');
+            const progressPercentage = document.getElementById('progressPercentage');
+            
+            progressBar.style.width = `${percentage}%`;
+            progressText.textContent = `${current}/${total}`;
+            progressPercentage.textContent = `${percentage}%`;
+        }
+
+        // Function to add a new log entry
+        function addLogEntry(data) {
+            const log = document.getElementById('resultsLog');
+            const entry = document.createElement('div');
+            entry.className = `result-entry ${data.type}`;
+            
+            entry.innerHTML = `
+                <span class="timestamp">${data.timestamp}</span>
+                <span class="account">${data.account}</span>
+                <span class="lead">${data.lead}</span>
+                <span class="status-msg">${data.message}</span>
+                <span class="status-icon ${data.type}">
+                    <i class="fas ${data.type === 'success' ? 'fa-check' : 
+                                  data.type === 'error' ? 'fa-times' :
+                                  data.type === 'info' ? 'fa-info' : 'fa-exclamation'}"></i>
+                </span>
+            `;
+            
+            log.insertBefore(entry, log.firstChild);
+        }
+
+        // Socket.IO connection for real-time updates
+        const socket = io();
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            // Start with some initial data
+            updateProgress(0, {{ total_leads_overall|default(0) }});
+            
+            // Emit start messaging task to backend
+            socket.emit('start_messaging_task');
+            
+            // Listen for initial campaign stats
+            socket.on('initial_campaign_stats', function(data) {
+                document.getElementById('totalAccountsDisplay').textContent = data.total_accounts;
+                document.getElementById('totalCampaignLeadsDisplay').textContent = data.total_leads;
+                document.getElementById('messagesSentDisplay').textContent = data.overall_sent;
+                updateProgress(data.overall_sent, data.total_leads);
+            });
+
+            // Listen for account processing start
+            socket.on('account_processing_start', function(data) {
+                addLogEntry({
+                    timestamp: new Date().toLocaleTimeString(),
+                    account: data.account_username,
+                    lead: '-',
+                    message: `Processing account ${data.account_index}/${data.total_accounts} with ${data.leads_for_this_account} leads`,
+                    type: 'info'
+                });
+            });
+
+            // Listen for current lead updates
+            socket.on('current_lead_update', function(data) {
+                addLogEntry({
+                    timestamp: new Date().toLocaleTimeString(),
+                    account: data.account_username,
+                    lead: data.lead_username,
+                    message: `Processing lead ${data.lead_in_account_count}/${data.total_leads_in_account}`,
+                    type: 'info'
+                });
+                updateProgress(data.overall_progress_percent || 0, 100);
+            });
+
+            // Listen for countdown events
+            socket.on('countdown', function(data) {
+                document.getElementById('nextMessageDisplay').textContent = `${data.seconds}s`;
+            });
+
+            // Listen for lead processed events
+            socket.on('lead_processed', function(data) {
+                addLogEntry({
+                    timestamp: new Date().toLocaleTimeString(),
+                    account: data.account_username || 'Unknown',
+                    lead: data.username || 'Unknown',
+                    message: data.message || 'Processed',
+                    type: data.success ? 'success' : 'error'
+                });
+                
+                // Update sent count
+                const currentSent = parseInt(document.getElementById('messagesSentDisplay').textContent) || 0;
+                if (data.success) {
+                    document.getElementById('messagesSentDisplay').textContent = currentSent + 1;
+                }
+            });
+
+            // Listen for account completed events
+            socket.on('account_processing_complete', function(data) {
+                addLogEntry({
+                    timestamp: new Date().toLocaleTimeString(),
+                    account: data.account_username,
+                    lead: '-',
+                    message: `Account completed. Sent: ${data.sent_count}, Failed: ${data.failed_count}`,
+                    type: 'success'
+                });
+            });
+
+            // Listen for campaign completed events
+            socket.on('campaign_complete', function(data) {
+                addLogEntry({
+                    timestamp: new Date().toLocaleTimeString(),
+                    account: 'Campaign',
+                    lead: '-',
+                    message: `Campaign completed! Total sent: ${data.overall_sent}, Total failed: ${data.overall_failed}`,
+                    type: 'success'
+                });
+                document.getElementById('nextMessageDisplay').textContent = 'Complete';
+            });
+
+            // Listen for script errors
+            socket.on('script_error', function(data) {
+                addLogEntry({
+                    timestamp: new Date().toLocaleTimeString(),
+                    account: 'System',
+                    lead: '-',
+                    message: data.error_message || 'An error occurred',
+                    type: 'error'
+                });
+            });
+        });
+    </script>
+</body>
+</html> 
