@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, flash, redirect, url_for, session
+from flask import Flask, render_template, request, flash, redirect, url_for, session, Response
 import os
 import time
 import json
@@ -116,14 +116,279 @@ def emit_countdown(seconds):
     socketio.emit('countdown', {'seconds': seconds})
     logger.info(f"Waiting {seconds} seconds before next account...")
 
-def send_messages_old_unused(username, password, leads_file, message_template, delay_seconds=30):
+def create_fresh_chrome_options():
+    """Create a fresh ChromeOptions object with advanced anti-detection features."""
     options = uc.ChromeOptions()
+    
+    # Basic stealth arguments
     options.add_argument('--no-sandbox')
     options.add_argument('--disable-dev-shm-usage')
-    options.add_argument('--start-maximized')
     options.add_argument('--disable-blink-features=AutomationControlled')
     options.add_argument('--disable-extensions')
+    options.add_argument('--disable-notifications')
+    options.add_argument('--disable-popup-blocking')
+    options.add_argument('--start-maximized')
+    options.add_argument('--disable-gpu')
+    options.add_argument('--lang=en-US')
+    options.add_argument('--disable-infobars')
+    options.add_argument('--disable-web-security')
+    options.add_argument('--disable-features=VizDisplayCompositor')
+    
+    # Advanced anti-detection arguments
+    options.add_argument('--disable-automation')
     options.add_argument('--disable-plugins-discovery')
+    options.add_argument('--disable-default-apps')
+    options.add_argument('--disable-background-timer-throttling')
+    options.add_argument('--disable-backgrounding-occluded-windows')
+    options.add_argument('--disable-renderer-backgrounding')
+    options.add_argument('--disable-features=TranslateUI')
+    options.add_argument('--disable-ipc-flooding-protection')
+    options.add_argument('--no-first-run')
+    options.add_argument('--no-service-autorun')
+    options.add_argument('--password-store=basic')
+    options.add_argument('--use-mock-keychain')
+    options.add_argument('--disable-component-extensions-with-background-pages')
+    options.add_argument('--disable-background-networking')
+    options.add_argument('--disable-sync')
+    options.add_argument('--metrics-recording-only')
+    options.add_argument('--disable-default-apps')
+    options.add_argument('--mute-audio')
+    options.add_argument('--no-zygote')
+    options.add_argument('--disable-background-mode')
+    
+    # Randomize window size to avoid fingerprinting
+    window_sizes = [
+        '--window-size=1366,768',
+        '--window-size=1920,1080', 
+        '--window-size=1440,900',
+        '--window-size=1536,864',
+        '--window-size=1280,720'
+    ]
+    options.add_argument(random.choice(window_sizes))
+    
+    # Add realistic user agent with random selection
+    user_agents = [
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+        'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0',
+        'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36'
+    ]
+    options.add_argument(f'user-agent={random.choice(user_agents)}')
+    
+    # Skip experimental options for better compatibility
+    # undetected-chromedriver handles most automation hiding automatically
+    
+    return options
+
+def inject_stealth_scripts(driver):
+    """Inject JavaScript to hide automation traces and make behavior more human-like."""
+    try:
+        # Hide webdriver property
+        driver.execute_script("""
+            Object.defineProperty(navigator, 'webdriver', {
+                get: () => undefined,
+            });
+        """)
+        
+        # Override plugins and languages to look more realistic
+        driver.execute_script("""
+            Object.defineProperty(navigator, 'plugins', {
+                get: () => [1, 2, 3, 4, 5],
+            });
+        """)
+        
+        # Override permissions
+        driver.execute_script("""
+            const originalQuery = window.navigator.permissions.query;
+            return window.navigator.permissions.query = (parameters) => (
+                parameters.name === 'notifications' ?
+                    Promise.resolve({ state: Notification.permission }) :
+                    originalQuery(parameters)
+            );
+        """)
+        
+        # Hide automation indicators
+        driver.execute_script("""
+            window.chrome = {
+                runtime: {},
+            };
+        """)
+        
+        # Override the isConnected property
+        driver.execute_script("""
+            Object.defineProperty(HTMLElement.prototype, 'isConnected', {
+                get() {
+                    return true;
+                }
+            });
+        """)
+        
+        # Add realistic screen properties
+        driver.execute_script("""
+            Object.defineProperty(screen, 'availTop', {
+                get: () => 0,
+            });
+            Object.defineProperty(screen, 'availLeft', {
+                get: () => 0,
+            });
+        """)
+        
+        logger.info("Successfully injected stealth scripts")
+        
+    except Exception as e:
+        logger.warning(f"Failed to inject some stealth scripts: {e}")
+
+def simulate_human_behavior(driver, action_type="general"):
+    """Simulate human-like behavior with random mouse movements and delays."""
+    try:
+        if action_type == "before_login":
+            # Simulate reading the page
+            time.sleep(random.uniform(2, 4))
+            
+            # Random scroll to simulate looking around
+            driver.execute_script("window.scrollTo(0, Math.floor(Math.random() * 200));")
+            time.sleep(random.uniform(1, 2))
+            
+        elif action_type == "before_profile_visit":
+            # Simulate human hesitation before visiting profile
+            time.sleep(random.uniform(1, 3))
+            
+            # Random small scroll
+            driver.execute_script("window.scrollTo(0, Math.floor(Math.random() * 100));")
+            time.sleep(random.uniform(0.5, 1.5))
+            
+        elif action_type == "before_message":
+            # Simulate reading the profile
+            time.sleep(random.uniform(3, 6))
+            
+            # Random scroll on profile
+            driver.execute_script("window.scrollTo(0, Math.floor(Math.random() * 300));")
+            time.sleep(random.uniform(1, 2))
+            
+            # Scroll back up
+            driver.execute_script("window.scrollTo(0, 0);")
+            time.sleep(random.uniform(1, 2))
+            
+    except Exception as e:
+        logger.warning(f"Error in human behavior simulation: {e}")
+
+def human_like_typing(element, text, driver):
+    """Type text in a human-like manner with realistic delays and occasional corrections."""
+    try:
+        # Clear the field first
+        element.clear()
+        time.sleep(random.uniform(0.3, 0.8))
+        
+        # Sometimes make a "mistake" and correct it for more realism
+        if random.random() < 0.15:  # 15% chance of making a typo
+            # Type a wrong character first
+            wrong_chars = ['x', 'z', 'q', 'w']
+            element.send_keys(random.choice(wrong_chars))
+            time.sleep(random.uniform(0.2, 0.5))
+            
+            # Backspace to correct
+            element.send_keys(Keys.BACKSPACE)
+            time.sleep(random.uniform(0.3, 0.7))
+        
+        # Type the actual message with human-like variations
+        for i, char in enumerate(text):
+            element.send_keys(char)
+            
+            # Vary typing speed - slower at beginning, faster in middle, slower at end
+            if i < len(text) * 0.2:  # First 20%
+                delay = random.uniform(0.15, 0.35)
+            elif i < len(text) * 0.8:  # Middle 60%
+                delay = random.uniform(0.08, 0.20)
+            else:  # Last 20%
+                delay = random.uniform(0.12, 0.30)
+            
+            # Occasionally pause longer (thinking)
+            if random.random() < 0.05:  # 5% chance
+                delay += random.uniform(0.5, 1.2)
+            
+            # Pause longer after punctuation
+            if char in '.,!?':
+                delay += random.uniform(0.2, 0.5)
+            
+            time.sleep(delay)
+        
+        # Sometimes pause before sending (reviewing message)
+        if random.random() < 0.3:  # 30% chance
+            time.sleep(random.uniform(1, 3))
+            
+    except Exception as e:
+        logger.warning(f"Error in human-like typing: {e}")
+        # Fallback to simple typing
+        element.clear()
+        element.send_keys(text)
+
+def visit_profile_naturally(driver, username, wait):
+    """Visit a profile using different methods to appear more natural."""
+    methods = ['direct_url', 'search']
+    method = random.choice(methods)
+    
+    try:
+        if method == 'search' and random.random() < 0.4:  # 40% chance to use search
+            logger.info(f"Using search method to find {username}")
+            
+            # Go to Instagram home first
+            driver.get('https://www.instagram.com/')
+            time.sleep(random.uniform(2, 4))
+            
+            # Re-inject stealth scripts
+            inject_stealth_scripts(driver)
+            
+            # Find and click search
+            search_selectors = [
+                "//input[@placeholder='Search']",
+                "//input[@aria-label='Search input']",
+                "//input[contains(@placeholder, 'Search')]"
+            ]
+            
+            search_input = None
+            for selector in search_selectors:
+                try:
+                    search_input = wait.until(EC.element_to_be_clickable((By.XPATH, selector)))
+                    break
+                except:
+                    continue
+            
+            if search_input:
+                search_input.click()
+                time.sleep(random.uniform(0.5, 1))
+                
+                # Type username with human-like behavior
+                human_like_typing(search_input, username, driver)
+                time.sleep(random.uniform(1, 2))
+                
+                # Wait for search results and click on the profile
+                try:
+                    profile_link = wait.until(EC.element_to_be_clickable((By.XPATH, f"//a[contains(@href, '/{username}/')]")))
+                    time.sleep(random.uniform(1, 2))
+                    profile_link.click()
+                    time.sleep(random.uniform(2, 4))
+                    return True
+                except:
+                    logger.info(f"Search method failed for {username}, falling back to direct URL")
+                    
+        # Fallback to direct URL method
+        logger.info(f"Using direct URL method for {username}")
+        profile_url = f'https://www.instagram.com/{username.strip()}/'
+        driver.get(profile_url)
+        time.sleep(random.uniform(3, 5))
+        return True
+        
+    except Exception as e:
+        logger.warning(f"Error in visit_profile_naturally: {e}")
+        # Final fallback
+        profile_url = f'https://www.instagram.com/{username.strip()}/'
+        driver.get(profile_url)
+        time.sleep(random.uniform(3, 5))
+        return True
+
+def send_messages_old_unused(username, password, leads_file, message_template, delay_seconds=30):
+    options = create_fresh_chrome_options()
     
     driver = None # Initialize driver to None for robust finally block
     results_list = [] 
@@ -199,9 +464,18 @@ def send_messages_old_unused(username, password, leads_file, message_template, d
             found_btn_and_messaged = False
 
             try:
-                profile_url = f'https://www.instagram.com/{lead_username.strip()}/'
-                logger.info(f"Navigating to profile: {profile_url}")
-                driver.get(profile_url)
+                # Simulate human behavior before visiting profile
+                simulate_human_behavior(driver, "before_profile_visit")
+                
+                # Use natural profile visiting method
+                visit_profile_naturally(driver, lead_username, wait)
+                
+                # Re-inject stealth scripts on new page
+                inject_stealth_scripts(driver)
+                
+                # Simulate human behavior on profile (reading, scrolling)
+                simulate_human_behavior(driver, "before_message")
+                
                 time.sleep(random.uniform(3, 5))  # Allow page to load properly
 
                 # Try to find and click the Message button with multiple strategies
@@ -306,9 +580,7 @@ def send_messages_old_unused(username, password, leads_file, message_template, d
                     
                     # Type the message character by character
                     logger.info(f"Lead {lead_username}: Typing message...")
-                    for char in personalized_message:
-                        msg_input.send_keys(char)
-                        time.sleep(random.uniform(0.05, 0.15))
+                    human_like_typing(msg_input, personalized_message, driver)
                     
                     time.sleep(1)
                     logger.info(f"Lead {lead_username}: Message typed successfully")
@@ -385,8 +657,23 @@ def send_messages_old_unused(username, password, leads_file, message_template, d
     
     finally:
         if driver:
-            driver.quit()
-            logger.info("WebDriver quit.")
+            try:
+                # Comprehensive cleanup to prevent ChromeOptions reuse issues
+                driver.delete_all_cookies()
+                driver.execute_script("window.localStorage.clear();")
+                driver.execute_script("window.sessionStorage.clear();")
+            except Exception as cleanup_error:
+                logger.warning(f"Error during driver cleanup for {username}: {cleanup_error}")
+            finally:
+                driver.quit()
+                logger.info(f"WebDriver quit for account: {username}")
+                
+                # Force garbage collection to ensure clean state for next account
+                import gc
+                gc.collect()
+                
+                # Small delay to ensure driver is fully cleaned up
+                time.sleep(random.uniform(1, 2))
     
     final_summary_message = f"Campaign finished! Processed: {len(results_list)}/{total_leads}, Sent: {sum(1 for _, s, _ in results_list if s)}, Failed: {sum(1 for _, s, _ in results_list if not s)}"
     logger.info(final_summary_message)
@@ -519,29 +806,34 @@ def handle_start_messaging_task():
             logger.info(f"Starting processing for account: {account['username']}")
             
             # Configure Chrome options for optimal performance and stealth
-            options = uc.ChromeOptions()
-            options.add_argument('--no-sandbox')
-            options.add_argument('--disable-dev-shm-usage')
-            options.add_argument('--disable-blink-features=AutomationControlled')
-            options.add_argument('--disable-extensions')
-            options.add_argument('--disable-notifications')
-            options.add_argument('--disable-popup-blocking')
-            options.add_argument('--start-maximized')
-            options.add_argument('--disable-gpu')
-            options.add_argument('--lang=en-US')
-            options.add_argument('--disable-infobars')
+            options = create_fresh_chrome_options()
             
-            # Add random user agent
-            user_agents = [
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-                'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-                'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0'
-            ]
-            options.add_argument(f'user-agent={random.choice(user_agents)}')
+            # Initialize Chrome driver with automatic version detection to avoid version mismatch
+            try:
+                # Force garbage collection to ensure clean state
+                import gc
+                gc.collect()
+                
+                # Add a small random delay to prevent collision between drivers
+                time.sleep(random.uniform(1, 3))
+                
+                driver = uc.Chrome(options=options, version_main=None)
+                logger.info(f"Successfully initialized Chrome driver with auto-detection for account: {account['username']}")
+            except Exception as e:
+                logger.warning(f"Failed to initialize with auto-detection for {account['username']}, trying with version 136: {e}")
+                try:
+                    # Create fresh options again in case the previous attempt corrupted them
+                    options = create_fresh_chrome_options()
+                    driver = uc.Chrome(options=options, version_main=136)
+                    logger.info(f"Successfully initialized Chrome driver with version 136 for account: {account['username']}")
+                except Exception as e2:
+                    logger.error(f"Failed to initialize Chrome driver for account {account['username']}: {e2}")
+                    socketio.emit('script_error', {
+                        'error_message': f"Chrome driver initialization failed for {account['username']}. Skipping this account. Error: {str(e2)}"
+                    })
+                    continue  # Skip this account and move to next one
             
-            driver = uc.Chrome(options=options)
-            wait = WebDriverWait(driver, 20)
+            wait = WebDriverWait(driver, 20) # Standard wait
             short_wait = WebDriverWait(driver, 7)
 
             # Clear cookies and cache before login
@@ -549,6 +841,13 @@ def handle_start_messaging_task():
             
             # Perform login with human-like behavior
             driver.get('https://www.instagram.com/')
+            
+            # Inject stealth scripts immediately after page load
+            inject_stealth_scripts(driver)
+            
+            # Simulate human behavior before login
+            simulate_human_behavior(driver, "before_login")
+            
             time.sleep(random.uniform(3,5))  # Wait longer for initial page load
             
             # Simulate human-like typing and interaction
@@ -588,6 +887,9 @@ def handle_start_messaging_task():
             
             # Wait longer after login attempt
             time.sleep(random.uniform(5,7))
+            
+            # Re-inject stealth scripts after login (in case page refreshed)
+            inject_stealth_scripts(driver)
 
             # Handle "Not Now" popups
             not_now_xpaths = ["//button[text()='Not Now']", "//div[@role='button' and text()='Not Now']"]
@@ -622,8 +924,18 @@ def handle_start_messaging_task():
                 lead_message = "Processing..."
 
                 try:
-                    profile_url = f'https://www.instagram.com/{lead_username.strip()}/'
-                    driver.get(profile_url)
+                    # Simulate human behavior before visiting profile
+                    simulate_human_behavior(driver, "before_profile_visit")
+                    
+                    # Use natural profile visiting method
+                    visit_profile_naturally(driver, lead_username, wait)
+                    
+                    # Re-inject stealth scripts on new page
+                    inject_stealth_scripts(driver)
+                    
+                    # Simulate human behavior on profile (reading, scrolling)
+                    simulate_human_behavior(driver, "before_message")
+                    
                     time.sleep(random.uniform(3, 5))  # Allow page to load properly
 
                     # Try to find and click the Message button with multiple strategies
@@ -728,9 +1040,7 @@ def handle_start_messaging_task():
                         
                         # Type the message character by character
                         logger.info(f"Lead {lead_username}: Typing message...")
-                        for char in personalized_message:
-                            msg_input.send_keys(char)
-                            time.sleep(random.uniform(0.05, 0.15))
+                        human_like_typing(msg_input, personalized_message, driver)
                         
                         time.sleep(1)
                         logger.info(f"Lead {lead_username}: Message typed successfully")
@@ -775,8 +1085,24 @@ def handle_start_messaging_task():
                         overall_sent_count += 1
                         account_sent_count += 1
 
-                        # Add delay between messages
-                        for sec in range(delay_seconds, 0, -1):
+                        # Add human-like delay between messages with variation
+                        actual_delay = delay_seconds
+                        
+                        # Add random variation (±20%)
+                        variation = random.uniform(-0.2, 0.2)
+                        actual_delay = int(actual_delay * (1 + variation))
+                        
+                        # Occasionally take longer breaks (every 5-10 messages)
+                        if account_sent_count % random.randint(5, 10) == 0:
+                            extra_break = random.randint(30, 90)
+                            actual_delay += extra_break
+                            logger.info(f"Taking extended break: {extra_break}s (total: {actual_delay}s)")
+                        
+                        # Ensure minimum delay
+                        actual_delay = max(actual_delay, 15)
+                        
+                        logger.info(f"Delaying {actual_delay}s before next message")
+                        for sec in range(actual_delay, 0, -1):
                             socketio.emit('countdown', {'seconds': sec})
                             time.sleep(1)
                     else:
@@ -809,8 +1135,23 @@ def handle_start_messaging_task():
         
         finally:
             if driver:
-                driver.quit()
-                logger.info(f"WebDriver quit for account: {account['username']}")
+                try:
+                    # Comprehensive cleanup to prevent ChromeOptions reuse issues
+                    driver.delete_all_cookies()
+                    driver.execute_script("window.localStorage.clear();")
+                    driver.execute_script("window.sessionStorage.clear();")
+                except Exception as cleanup_error:
+                    logger.warning(f"Error during driver cleanup for {account['username']}: {cleanup_error}")
+                finally:
+                    driver.quit()
+                    logger.info(f"WebDriver quit for account: {account['username']}")
+                    
+                    # Force garbage collection to ensure clean state for next account
+                    import gc
+                    gc.collect()
+                    
+                    # Small delay to ensure driver is fully cleaned up
+                    time.sleep(random.uniform(1, 2))
             
             socketio.emit('account_processing_complete', {
                 'account_username': account['username'],
@@ -875,4 +1216,5 @@ def results():
 
 if __name__ == '__main__':
     logger.info("Starting Flask application...")
-    socketio.run(app, host='127.0.0.1', port=8080, debug=True, allow_unsafe_werkzeug=True) 
+    # Use 0.0.0.0 to make it accessible on local network
+    socketio.run(app, host='0.0.0.0', port=8080, debug=False, allow_unsafe_werkzeug=True) 

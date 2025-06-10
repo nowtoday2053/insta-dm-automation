@@ -413,7 +413,6 @@
         <form id="campaignForm" method="POST" enctype="multipart/form-data">
             <!-- Hidden fields for backend compatibility -->
             <input type="hidden" name="num_accounts_to_submit" id="num_accounts_to_submit" value="1">
-            <input type="hidden" name="delay_seconds" value="30">
             
             <div class="form-section">
                 <h2 class="section-title">
@@ -446,9 +445,52 @@
                                 <i class="fas fa-cloud-upload-alt"></i>
                                 <div class="file-upload-text">
                                     <strong>Choose a file</strong> or drag it here
-                                    <p style="font-size: 0.9rem; margin-top: 5px;">Supported formats: .txt (one username per line), .csv, .xlsx (Excel)</p>
+                                    <p style="font-size: 0.9rem; margin-top: 5px;">Supported formats: .txt (username name per line), .csv, .xlsx (Excel with username & name columns)</p>
                                 </div>
                                 <input type="file" name="leads_file_0" accept=".txt,.csv,.xlsx" required>
+                            </div>
+                            <div style="margin-top: 15px;">
+                                <button type="button" class="btn-link" onclick="toggleFileFormat()" style="background: none; border: none; color: var(--primary-color); font-size: 0.9rem; text-decoration: underline; cursor: pointer;">
+                                    <i class="fas fa-question-circle"></i> See file format examples
+                                </button>
+                                <div id="fileFormatGuide" style="display: none; margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--info-color); font-size: 0.9rem;">
+                                    <h6 style="margin-bottom: 10px; color: var(--info-color);"><i class="fas fa-file-alt"></i> File Format Examples:</h6>
+                                    
+                                    <div style="margin-bottom: 12px;">
+                                        <strong>📄 .txt format (space or tab separated):</strong>
+                                        <pre style="background: #fff; padding: 8px; border-radius: 4px; margin: 5px 0; font-size: 0.85rem;">john_doe John Smith
+sarah_wilson Sarah Wilson
+mike_jones Mike</pre>
+                                    </div>
+                                    
+                                    <div style="margin-bottom: 12px;">
+                                        <strong>📊 .csv/.xlsx format:</strong>
+                                        <table style="width: 100%; border-collapse: collapse; margin: 5px 0; font-size: 0.85rem;">
+                                            <tr style="background: #fff;">
+                                                <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">username</th>
+                                                <th style="border: 1px solid #ddd; padding: 6px; text-align: left;">name</th>
+                                            </tr>
+                                            <tr style="background: #f9f9f9;">
+                                                <td style="border: 1px solid #ddd; padding: 6px;">john_doe</td>
+                                                <td style="border: 1px solid #ddd; padding: 6px;">John Smith</td>
+                                            </tr>
+                                            <tr style="background: #fff;">
+                                                <td style="border: 1px solid #ddd; padding: 6px;">sarah_wilson</td>
+                                                <td style="border: 1px solid #ddd; padding: 6px;">Sarah Wilson</td>
+                                            </tr>
+                                        </table>
+                                    </div>
+                                    
+                                    <div style="color: #666; font-size: 0.8rem;">
+                                        <i class="fas fa-lightbulb" style="color: #fbbf24;"></i>
+                                        <strong>Note:</strong> If no name is provided, the username will be used instead.
+                                    </div>
+                                    <div style="margin-top: 10px;">
+                                        <a href="/download-template" download class="btn" style="background: var(--success-color); color: white; padding: 8px 16px; border-radius: 6px; text-decoration: none; font-size: 0.85rem;">
+                                            <i class="fas fa-download"></i> Download CSV Template
+                                        </a>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -467,11 +509,47 @@
                 <div class="form-group">
                     <label class="form-label">
                         Your Message
-                        <span class="tooltip" data-tooltip="Use {name} to personalize the message">
+                        <span class="tooltip" data-tooltip="Use {name} to personalize the message with the lead's name from your Excel/CSV file">
                             <i class="fas fa-info-circle"></i>
                         </span>
                     </label>
-                    <textarea class="form-control" name="message_template" placeholder="Hey {name}! ..." required></textarea>
+                    <textarea class="form-control" name="message_template" placeholder="Hey {name}! Hope you're doing well. I'd love to connect and share something amazing with you!" required></textarea>
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 12px; padding: 12px; background: #f8f9fa; border-radius: 8px; border-left: 4px solid var(--primary-color);">
+                        <div style="margin-bottom: 8px;">
+                            <i class="fas fa-magic" style="color: var(--primary-color);"></i>
+                            <strong>Personalization Feature:</strong>
+                        </div>
+                        <div style="margin-bottom: 6px;">• Use <code>{name}</code> in your message to automatically insert each lead's name</div>
+                        <div style="margin-bottom: 6px;">• Your file should have two columns: <strong>username</strong> and <strong>name</strong></div>
+                        <div style="margin-bottom: 6px;">• Example: "Hey {name}!" becomes "Hey Sarah!" for each person</div>
+                        <div>• If no name is provided, it will use the username instead</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="form-section">
+                <h2 class="section-title">
+                    <i class="fas fa-clock"></i>
+                    Delay Settings
+                </h2>
+                <div class="form-group">
+                    <label class="form-label">
+                        Delay Between Messages (seconds)
+                        <span class="tooltip" data-tooltip="Set a delay between messages to avoid being banned. Recommended: 30-120 seconds">
+                            <i class="fas fa-info-circle"></i>
+                        </span>
+                    </label>
+                    <input type="number" class="form-control" name="delay_seconds" id="delay_seconds" min="5" max="300" value="30" placeholder="30" required>
+                    <div style="margin-top: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
+                        <button type="button" class="delay-preset" onclick="setDelay(15)" style="padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">15s (Fast)</button>
+                        <button type="button" class="delay-preset" onclick="setDelay(30)" style="padding: 6px 12px; border: 1px solid var(--primary-color); background: var(--primary-color); color: white; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">30s (Recommended)</button>
+                        <button type="button" class="delay-preset" onclick="setDelay(60)" style="padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">1min (Safe)</button>
+                        <button type="button" class="delay-preset" onclick="setDelay(120)" style="padding: 6px 12px; border: 1px solid var(--border-color); background: white; border-radius: 6px; font-size: 0.85rem; cursor: pointer;">2min (Very Safe)</button>
+                    </div>
+                    <div style="font-size: 0.9rem; color: #666; margin-top: 12px;">
+                        <i class="fas fa-shield-alt" style="color: var(--success-color);"></i>
+                        <strong>Safety Tips:</strong> Longer delays reduce the risk of account restrictions. Instagram monitors activity patterns.
+                    </div>
                 </div>
             </div>
 
@@ -488,9 +566,12 @@
     </div>
 
     <script>
-                // File upload preview        function setupFileUploadPreview() {            const fileInputs = document.querySelectorAll('input[type="file"]');            fileInputs.forEach(fileInput => {                const fileUpload = fileInput.closest('.file-upload');                const fileUploadText = fileUpload.querySelector('.file-upload-text');                                fileInput.addEventListener('change', function(e) {                    if(this.files && this.files[0]) {                        fileUploadText.innerHTML = `<strong>${this.files[0].name}</strong><p style="font-size: 0.9rem; margin-top: 5px;">File selected successfully</p>`;                        fileUpload.style.borderColor = 'var(--success-color)';                    }                });            });        }        // Initial setup        setupFileUploadPreview();        // Form submission handling        const form = document.getElementById('campaignForm');        const loadingSpinner = document.querySelector('.loading-spinner');        const successMessage = document.querySelector('.success-message');        form.addEventListener('submit', function(e) {            // Don't prevent default - let the form submit normally            loadingSpinner.style.display = 'block';            successMessage.style.display = 'block';        });
+                // File upload preview        function setupFileUploadPreview() {            const fileInputs = document.querySelectorAll('input[type="file"]');            fileInputs.forEach(fileInput => {                const fileUpload = fileInput.closest('.file-upload');                const fileUploadText = fileUpload.querySelector('.file-upload-text');                                fileInput.addEventListener('change', function(e) {                    if(this.files && this.files[0]) {                        fileUploadText.innerHTML = `<strong>${this.files[0].name}</strong><p style="font-size: 0.9rem; margin-top: 5px;">File selected successfully</p>`;                        fileUpload.style.borderColor = 'var(--success-color)';                    }                });            });        }        // Initial setup        setupFileUploadPreview();        // Form submission handling        const form = document.getElementById('campaignForm');        const loadingSpinner = document.querySelector('.loading-spinner');        const successMessage = document.querySelector('.success-message');        form.addEventListener('submit', function(e) {            const delayInput = document.getElementById('delay_seconds');            const delayValue = parseInt(delayInput.value);            
+            // Validate delay settings and warn if too low            if (delayValue < 30) {                const proceed = confirm(                    `⚠️ Warning: You've set a delay of ${delayValue} seconds.\n\n` +                    `Using delays under 30 seconds may increase the risk of:\n` +                    `• Account restrictions\n` +                    `• Message blocks\n` +                    `• Temporary bans\n\n` +                    `We recommend 30-120 seconds for safety.\n\n` +                    `Do you want to proceed anyway?`                );                
+            if (!proceed) {                    e.preventDefault();                    delayInput.focus();                    return false;                }            }            
+            // Don't prevent default - let the form submit normally            loadingSpinner.style.display = 'block';            successMessage.style.display = 'block';        });
 
-                // Add account form handling        const accountsContainer = document.getElementById('accounts-container');        const addAccountBtn = document.getElementById('addAccountBtn');        const numAccountsInput = document.getElementById('num_accounts_to_submit');        let accountCount = 1;        addAccountBtn.addEventListener('click', function() {            if (accountCount >= 4) {                alert('Maximum 4 accounts allowed');                return;            }            const accountCard = document.createElement('div');            accountCard.className = 'account-card';            accountCard.style.opacity = '1';            accountCard.innerHTML = `                <div class="form-group">                    <label class="form-label">                        Instagram Username                        <span class="tooltip" data-tooltip="Enter your Instagram account username">                            <i class="fas fa-info-circle"></i>                        </span>                    </label>                    <input type="text" class="form-control" name="username_${accountCount}" placeholder="e.g., youraccount" required>                </div>                <div class="form-group">                    <label class="form-label">                        Instagram Password                        <span class="tooltip" data-tooltip="Your password is securely handled">                            <i class="fas fa-info-circle"></i>                        </span>                    </label>                    <input type="password" class="form-control" name="password_${accountCount}" required>                </div>                <div class="form-group">                    <label class="form-label">Upload Username List for this Account</label>                    <div class="file-upload">                        <i class="fas fa-cloud-upload-alt"></i>                        <div class="file-upload-text">                            <strong>Choose a file</strong> or drag it here                            <p style="font-size: 0.9rem; margin-top: 5px;">Supported formats: .txt (one username per line), .csv, .xlsx (Excel)</p>                        </div>                        <input type="file" name="leads_file_${accountCount}" accept=".txt,.csv,.xlsx" required>                    </div>                </div>                <button type="button" class="btn btn-danger-outline remove-account" style="margin-top: 10px;">                    <i class="fas fa-trash"></i>                    Remove Account                </button>            `;                        accountsContainer.appendChild(accountCard);            accountCount++;            numAccountsInput.value = accountCount;            // Setup file upload preview for new account            setupFileUploadPreview();            // Add remove button functionality            accountCard.querySelector('.remove-account').addEventListener('click', function() {                accountCard.remove();                accountCount--;                numAccountsInput.value = accountCount;            });        });
+                // Add account form handling        const accountsContainer = document.getElementById('accounts-container');        const addAccountBtn = document.getElementById('addAccountBtn');        const numAccountsInput = document.getElementById('num_accounts_to_submit');        let accountCount = 1;        addAccountBtn.addEventListener('click', function() {            if (accountCount >= 4) {                alert('Maximum 4 accounts allowed');                return;            }            const accountCard = document.createElement('div');            accountCard.className = 'account-card';            accountCard.style.opacity = '1';            accountCard.innerHTML = `                <div class="form-group">                    <label class="form-label">                        Instagram Username                        <span class="tooltip" data-tooltip="Enter your Instagram account username">                            <i class="fas fa-info-circle"></i>                        </span>                    </label>                    <input type="text" class="form-control" name="username_${accountCount}" placeholder="e.g., youraccount" required>                </div>                <div class="form-group">                    <label class="form-label">                        Instagram Password                        <span class="tooltip" data-tooltip="Your password is securely handled">                            <i class="fas fa-info-circle"></i>                        </span>                    </label>                    <input type="password" class="form-control" name="password_${accountCount}" required>                </div>                <div class="form-group">                    <label class="form-label">Upload Username List for this Account</label>                    <div class="file-upload">                        <i class="fas fa-cloud-upload-alt"></i>                        <div class="file-upload-text">                            <strong>Choose a file</strong> or drag it here                            <p style="font-size: 0.9rem; margin-top: 5px;">Supported formats: .txt (username name per line), .csv, .xlsx (Excel with username & name columns)</p>                        </div>                        <input type="file" name="leads_file_${accountCount}" accept=".txt,.csv,.xlsx" required>                    </div>                </div>                <button type="button" class="btn btn-danger-outline remove-account" style="margin-top: 10px;">                    <i class="fas fa-trash"></i>                    Remove Account                </button>            `;                        accountsContainer.appendChild(accountCard);            accountCount++;            numAccountsInput.value = accountCount;            // Setup file upload preview for new account            setupFileUploadPreview();            // Add remove button functionality            accountCard.querySelector('.remove-account').addEventListener('click', function() {                accountCard.remove();                accountCount--;                numAccountsInput.value = accountCount;            });        });
 
         // Display connected accounts and DM status
         function updateConnectedAccounts(accounts) {
@@ -507,6 +588,85 @@
             const dmStatusContainer = document.getElementById('dmStatus');
             dmStatusContainer.textContent = status;
         }
+
+        // Toggle file format guide visibility
+        function toggleFileFormat() {
+            const guide = document.getElementById('fileFormatGuide');
+            if (guide.style.display === 'none') {
+                guide.style.display = 'block';
+            } else {
+                guide.style.display = 'none';
+            }
+        }
+
+        // Set delay value and update button styles
+        function setDelay(seconds) {
+            document.getElementById('delay_seconds').value = seconds;
+            updateDelayFeedback(seconds);
+            
+            // Update button styles
+            const buttons = document.querySelectorAll('.delay-preset');
+            buttons.forEach(btn => {
+                btn.style.background = 'white';
+                btn.style.color = 'var(--text-color)';
+                btn.style.border = '1px solid var(--border-color)';
+            });
+            
+            // Highlight selected button
+            event.target.style.background = 'var(--primary-color)';
+            event.target.style.color = 'white';
+            event.target.style.border = '1px solid var(--primary-color)';
+        }
+
+        // Update delay feedback based on value
+        function updateDelayFeedback(value) {
+            const input = document.getElementById('delay_seconds');
+            const container = input.parentElement;
+            
+            // Remove existing feedback
+            const existingFeedback = container.querySelector('.delay-feedback');
+            if (existingFeedback) {
+                existingFeedback.remove();
+            }
+            
+            let feedbackHTML = '';
+            let color = '';
+            
+            if (value < 15) {
+                color = '#ef4444';
+                feedbackHTML = `<div class="delay-feedback" style="margin-top: 8px; padding: 8px; border-radius: 6px; background: #fef2f2; border-left: 4px solid ${color}; font-size: 0.85rem;">
+                    <i class="fas fa-exclamation-triangle" style="color: ${color};"></i> <strong>High Risk:</strong> Very likely to trigger restrictions
+                </div>`;
+            } else if (value < 30) {
+                color = '#f59e0b';
+                feedbackHTML = `<div class="delay-feedback" style="margin-top: 8px; padding: 8px; border-radius: 6px; background: #fffbeb; border-left: 4px solid ${color}; font-size: 0.85rem;">
+                    <i class="fas fa-exclamation-circle" style="color: ${color};"></i> <strong>Medium Risk:</strong> May trigger account warnings
+                </div>`;
+            } else if (value < 60) {
+                color = '#10b981';
+                feedbackHTML = `<div class="delay-feedback" style="margin-top: 8px; padding: 8px; border-radius: 6px; background: #f0fdf4; border-left: 4px solid ${color}; font-size: 0.85rem;">
+                    <i class="fas fa-check-circle" style="color: ${color};"></i> <strong>Good:</strong> Recommended for most users
+                </div>`;
+            } else {
+                color = '#10b981';
+                feedbackHTML = `<div class="delay-feedback" style="margin-top: 8px; padding: 8px; border-radius: 6px; background: #f0fdf4; border-left: 4px solid ${color}; font-size: 0.85rem;">
+                    <i class="fas fa-shield-alt" style="color: ${color};"></i> <strong>Very Safe:</strong> Minimal risk of restrictions
+                </div>`;
+            }
+            
+            container.insertAdjacentHTML('beforeend', feedbackHTML);
+        }
+
+        // Add event listener for real-time delay feedback
+        document.addEventListener('DOMContentLoaded', function() {
+            const delayInput = document.getElementById('delay_seconds');
+            delayInput.addEventListener('input', function() {
+                updateDelayFeedback(parseInt(this.value) || 0);
+            });
+            
+            // Initialize with default value
+            updateDelayFeedback(30);
+        });
 
         // Example usage (replace with actual data from backend)
         updateConnectedAccounts([{ username: '@example1' }, { username: '@example2' }]);
