@@ -14,6 +14,9 @@ from selenium.webdriver.common.action_chains import ActionChains
 from werkzeug.utils import secure_filename
 import random
 from flask_socketio import SocketIO, emit
+import subprocess
+import re
+import platform
 
 # Set up logging
 logging.basicConfig(level=logging.INFO)  # Changed from DEBUG to INFO
@@ -116,6 +119,40 @@ def emit_countdown(seconds):
     socketio.emit('countdown', {'seconds': seconds})
     logger.info(f"Waiting {seconds} seconds before next account...")
 
+def get_chrome_version():
+    """Get the installed Chrome version."""
+    system = platform.system()
+    
+    if system == "Windows":
+        commands = [
+            'reg query "HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon" /v version',
+            'reg query "HKLM\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome" /v version',
+        ]
+    elif system == "Darwin":  # macOS
+        commands = [
+            '/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --version'
+        ]
+    else:  # Linux
+        commands = [
+            'google-chrome --version',
+            'google-chrome-stable --version',
+            'chromium --version',
+            'chromium-browser --version'
+        ]
+    
+    for command in commands:
+        try:
+            result = subprocess.run(command, shell=True, capture_output=True, text=True)
+            if result.returncode == 0 and result.stdout:
+                # Extract version number
+                version_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', result.stdout)
+                if version_match:
+                    return version_match.group(1)
+        except Exception:
+            continue
+    
+    return None
+
 def create_fresh_chrome_options():
     """Create a fresh ChromeOptions object with advanced anti-detection features."""
     options = uc.ChromeOptions()
@@ -183,61 +220,118 @@ def create_fresh_chrome_options():
 
 def inject_stealth_scripts(driver):
     """Inject JavaScript to hide automation traces and make behavior more human-like."""
+    scripts_applied = 0
+    total_scripts = 6
+    
+    # Hide webdriver property (only if not already handled by undetected_chromedriver)
     try:
-        # Hide webdriver property
         driver.execute_script("""
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined,
-            });
-        """)
-        
-        # Override plugins and languages to look more realistic
-        driver.execute_script("""
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => [1, 2, 3, 4, 5],
-            });
-        """)
-        
-        # Override permissions
-        driver.execute_script("""
-            const originalQuery = window.navigator.permissions.query;
-            return window.navigator.permissions.query = (parameters) => (
-                parameters.name === 'notifications' ?
-                    Promise.resolve({ state: Notification.permission }) :
-                    originalQuery(parameters)
-            );
-        """)
-        
-        # Hide automation indicators
-        driver.execute_script("""
-            window.chrome = {
-                runtime: {},
-            };
-        """)
-        
-        # Override the isConnected property
-        driver.execute_script("""
-            Object.defineProperty(HTMLElement.prototype, 'isConnected', {
-                get() {
-                    return true;
+            if (navigator.webdriver !== undefined) {
+                try {
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined,
+                        configurable: true
+                    });
+                } catch (e) {
+                    // Property might already be defined by undetected_chromedriver
+                    delete navigator.webdriver;
                 }
-            });
+            }
         """)
-        
-        # Add realistic screen properties
-        driver.execute_script("""
-            Object.defineProperty(screen, 'availTop', {
-                get: () => 0,
-            });
-            Object.defineProperty(screen, 'availLeft', {
-                get: () => 0,
-            });
-        """)
-        
-        logger.info("Successfully injected stealth scripts")
-        
+        scripts_applied += 1
     except Exception as e:
-        logger.warning(f"Failed to inject some stealth scripts: {e}")
+        logger.debug(f"Webdriver property script failed (likely already handled): {e}")
+    
+    # Override plugins and languages to look more realistic
+    try:
+        driver.execute_script("""
+            try {
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                    configurable: true
+                });
+            } catch (e) {
+                // Ignore if already defined
+            }
+        """)
+        scripts_applied += 1
+    except Exception as e:
+        logger.debug(f"Plugins script failed: {e}")
+    
+    # Override permissions
+    try:
+        driver.execute_script("""
+            try {
+                const originalQuery = window.navigator.permissions.query;
+                window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                        Promise.resolve({ state: Notification.permission }) :
+                        originalQuery(parameters)
+                );
+            } catch (e) {
+                // Ignore if permissions API not available
+            }
+        """)
+        scripts_applied += 1
+    except Exception as e:
+        logger.debug(f"Permissions script failed: {e}")
+    
+    # Hide automation indicators
+    try:
+        driver.execute_script("""
+            try {
+                if (!window.chrome) {
+                    window.chrome = {
+                        runtime: {},
+                    };
+                }
+            } catch (e) {
+                // Ignore if already defined
+            }
+        """)
+        scripts_applied += 1
+    except Exception as e:
+        logger.debug(f"Chrome object script failed: {e}")
+    
+    # Override the isConnected property
+    try:
+        driver.execute_script("""
+            try {
+                Object.defineProperty(HTMLElement.prototype, 'isConnected', {
+                    get() {
+                        return true;
+                    },
+                    configurable: true
+                });
+            } catch (e) {
+                // Ignore if already defined
+            }
+        """)
+        scripts_applied += 1
+    except Exception as e:
+        logger.debug(f"isConnected script failed: {e}")
+    
+    # Add realistic screen properties
+    try:
+        driver.execute_script("""
+            try {
+                Object.defineProperty(screen, 'availTop', {
+                    get: () => 0,
+                    configurable: true
+                });
+                Object.defineProperty(screen, 'availLeft', {
+                    get: () => 0,
+                    configurable: true
+                });
+            } catch (e) {
+                // Ignore if already defined
+            }
+        """)
+        scripts_applied += 1
+    except Exception as e:
+        logger.debug(f"Screen properties script failed: {e}")
+    
+    logger.info(f"Successfully injected {scripts_applied}/{total_scripts} stealth scripts")
 
 def simulate_human_behavior(driver, action_type="general"):
     """Simulate human-like behavior with random mouse movements and delays."""
@@ -394,7 +488,26 @@ def send_messages_old_unused(username, password, leads_file, message_template, d
     results_list = [] 
     
     try:
-        driver = uc.Chrome(options=options)
+        # Initialize Chrome driver with automatic version detection to avoid version mismatch
+        try:
+            driver = uc.Chrome(options=options, version_main=None)
+            logger.info("Successfully initialized Chrome driver with auto-detection")
+        except Exception as e:
+            logger.warning(f"Failed to initialize with auto-detection, trying with detected Chrome version: {e}")
+            # Get the Chrome version and extract major version
+            chrome_version = get_chrome_version()
+            if chrome_version:
+                major_version = int(chrome_version.split('.')[0])
+                logger.info(f"Detected Chrome version: {chrome_version}, using major version: {major_version}")
+            else:
+                major_version = None
+                logger.warning("Could not detect Chrome version, trying with no version specified")
+            
+            # Create fresh options again in case the previous attempt corrupted them
+            options = create_fresh_chrome_options()
+            driver = uc.Chrome(options=options, version_main=major_version)
+            logger.info(f"Successfully initialized Chrome driver with version {major_version}")
+        
         wait = WebDriverWait(driver, 20) # Standard wait
         short_wait = WebDriverWait(driver, 5) # Shorter wait for optional elements
 
@@ -820,12 +933,21 @@ def handle_start_messaging_task():
                 driver = uc.Chrome(options=options, version_main=None)
                 logger.info(f"Successfully initialized Chrome driver with auto-detection for account: {account['username']}")
             except Exception as e:
-                logger.warning(f"Failed to initialize with auto-detection for {account['username']}, trying with version 136: {e}")
+                logger.warning(f"Failed to initialize with auto-detection for {account['username']}, trying with detected Chrome version: {e}")
                 try:
+                    # Get the Chrome version and extract major version
+                    chrome_version = get_chrome_version()
+                    if chrome_version:
+                        major_version = int(chrome_version.split('.')[0])
+                        logger.info(f"Detected Chrome version: {chrome_version}, using major version: {major_version}")
+                    else:
+                        major_version = None
+                        logger.warning("Could not detect Chrome version, trying with no version specified")
+                    
                     # Create fresh options again in case the previous attempt corrupted them
                     options = create_fresh_chrome_options()
-                    driver = uc.Chrome(options=options, version_main=136)
-                    logger.info(f"Successfully initialized Chrome driver with version 136 for account: {account['username']}")
+                    driver = uc.Chrome(options=options, version_main=major_version)
+                    logger.info(f"Successfully initialized Chrome driver with version {major_version} for account: {account['username']}")
                 except Exception as e2:
                     logger.error(f"Failed to initialize Chrome driver for account {account['username']}: {e2}")
                     socketio.emit('script_error', {
@@ -1216,5 +1338,11 @@ def results():
 
 if __name__ == '__main__':
     logger.info("Starting Flask application...")
-    # Use 0.0.0.0 to make it accessible on local network
-    socketio.run(app, host='0.0.0.0', port=8080, debug=False, allow_unsafe_werkzeug=True) 
+    try:
+        logger.info("Attempting to start SocketIO server on port 5000...")
+        # Start with localhost and port 5000 for better compatibility
+        socketio.run(app, host='127.0.0.1', port=5000, debug=True)
+    except Exception as e:
+        logger.error(f"Failed to start application: {e}")
+        print(f"Error starting application: {e}")
+        input("Press Enter to exit...") 

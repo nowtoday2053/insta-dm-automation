@@ -7,7 +7,7 @@ import sys
 import os
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
-from app import create_fresh_chrome_options
+from app import create_fresh_chrome_options, get_chrome_version
 import undetected_chromedriver as uc
 import time
 
@@ -42,16 +42,24 @@ def test_chrome_options_reuse():
             except Exception as e:
                 print(f"   ❌ Failed to create Chrome instance {i + 1}: {e}")
                 
-                # Try with specific version as fallback
+                # Try with detected Chrome version as fallback
                 try:
+                    chrome_version = get_chrome_version()
+                    if chrome_version:
+                        major_version = int(chrome_version.split('.')[0])
+                        print(f"   🔍 Detected Chrome version: {chrome_version}, using major version: {major_version}")
+                    else:
+                        major_version = None
+                        print("   ⚠️  Could not detect Chrome version, trying with no version specified")
+                    
                     options = create_fresh_chrome_options()
                     options.add_argument('--headless')
-                    driver = uc.Chrome(options=options, version_main=136)
+                    driver = uc.Chrome(options=options, version_main=major_version)
                     drivers.append(driver)
-                    print(f"   ✅ Successfully created Chrome instance {i + 1} with version 136")
+                    print(f"   ✅ Successfully created Chrome instance {i + 1} with detected version {major_version}")
                     success_count += 1
                 except Exception as e2:
-                    print(f"   ❌ Failed with version 136 too: {e2}")
+                    print(f"   ❌ Failed with detected version too: {e2}")
     
     finally:
         # Clean up all drivers

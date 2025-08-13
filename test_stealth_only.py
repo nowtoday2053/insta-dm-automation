@@ -74,44 +74,85 @@ def create_stealth_chrome_options():
 
 def inject_stealth_scripts(driver):
     """Inject JavaScript to hide automation traces."""
+    scripts_applied = 0
+    total_scripts = 4
+    
+    # Hide webdriver property (only if not already handled by undetected_chromedriver)
     try:
-        # Hide webdriver property
         driver.execute_script("""
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => undefined,
-            });
+            if (navigator.webdriver !== undefined) {
+                try {
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => undefined,
+                        configurable: true
+                    });
+                } catch (e) {
+                    // Property might already be defined by undetected_chromedriver
+                    delete navigator.webdriver;
+                }
+            }
         """)
-        
-        # Override plugins
-        driver.execute_script("""
-            Object.defineProperty(navigator, 'plugins', {
-                get: () => [1, 2, 3, 4, 5],
-            });
-        """)
-        
-        # Override permissions
-        driver.execute_script("""
-            const originalQuery = window.navigator.permissions.query;
-            return window.navigator.permissions.query = (parameters) => (
-                parameters.name === 'notifications' ?
-                    Promise.resolve({ state: Notification.permission }) :
-                    originalQuery(parameters)
-            );
-        """)
-        
-        # Hide automation indicators
-        driver.execute_script("""
-            window.chrome = {
-                runtime: {},
-            };
-        """)
-        
-        print("   ✅ Stealth scripts injected successfully")
-        return True
-        
+        scripts_applied += 1
     except Exception as e:
-        print(f"   ❌ Failed to inject stealth scripts: {e}")
-        return False
+        print(f"   ⚠️  Webdriver property script failed (likely already handled): {e}")
+    
+    # Override plugins
+    try:
+        driver.execute_script("""
+            try {
+                Object.defineProperty(navigator, 'plugins', {
+                    get: () => [1, 2, 3, 4, 5],
+                    configurable: true
+                });
+            } catch (e) {
+                // Ignore if already defined
+            }
+        """)
+        scripts_applied += 1
+    except Exception as e:
+        print(f"   ⚠️  Plugins script failed: {e}")
+    
+    # Override permissions
+    try:
+        driver.execute_script("""
+            try {
+                const originalQuery = window.navigator.permissions.query;
+                window.navigator.permissions.query = (parameters) => (
+                    parameters.name === 'notifications' ?
+                        Promise.resolve({ state: Notification.permission }) :
+                        originalQuery(parameters)
+                );
+            } catch (e) {
+                // Ignore if permissions API not available
+            }
+        """)
+        scripts_applied += 1
+    except Exception as e:
+        print(f"   ⚠️  Permissions script failed: {e}")
+    
+    # Hide automation indicators
+    try:
+        driver.execute_script("""
+            try {
+                if (!window.chrome) {
+                    window.chrome = {
+                        runtime: {},
+                    };
+                }
+            } catch (e) {
+                // Ignore if already defined
+            }
+        """)
+        scripts_applied += 1
+    except Exception as e:
+        print(f"   ⚠️  Chrome object script failed: {e}")
+    
+    if scripts_applied == total_scripts:
+        print("   ✅ All stealth scripts injected successfully")
+        return True
+    else:
+        print(f"   ✅ {scripts_applied}/{total_scripts} stealth scripts injected successfully")
+        return scripts_applied > 0
 
 def test_instagram_stealth():
     """Test stealth features specifically for Instagram."""
@@ -139,13 +180,60 @@ def test_instagram_stealth():
             test_results['chrome_creation'] = True
             print("   ✅ Chrome instance created successfully with auto-detection")
         except Exception as e:
-            print(f"   ⚠️  Auto-detection failed, trying version 136: {e}")
+            print(f"   ⚠️  Auto-detection failed, trying with detected Chrome version: {e}")
             try:
+                # Get Chrome version
+                import subprocess
+                import re
+                import platform
+                
+                def get_chrome_version():
+                    """Get the installed Chrome version."""
+                    system = platform.system()
+                    
+                    if system == "Windows":
+                        commands = [
+                            'reg query "HKEY_CURRENT_USER\\Software\\Google\\Chrome\\BLBeacon" /v version',
+                            'reg query "HKLM\\SOFTWARE\\Wow6432Node\\Microsoft\\Windows\\CurrentVersion\\Uninstall\\Google Chrome" /v version',
+                        ]
+                    elif system == "Darwin":  # macOS
+                        commands = [
+                            '/Applications/Google\\ Chrome.app/Contents/MacOS/Google\\ Chrome --version'
+                        ]
+                    else:  # Linux
+                        commands = [
+                            'google-chrome --version',
+                            'google-chrome-stable --version',
+                            'chromium --version',
+                            'chromium-browser --version'
+                        ]
+                    
+                    for command in commands:
+                        try:
+                            result = subprocess.run(command, shell=True, capture_output=True, text=True)
+                            if result.returncode == 0 and result.stdout:
+                                # Extract version number
+                                version_match = re.search(r'(\d+\.\d+\.\d+\.\d+)', result.stdout)
+                                if version_match:
+                                    return version_match.group(1)
+                        except Exception:
+                            continue
+                    
+                    return None
+                
+                chrome_version = get_chrome_version()
+                if chrome_version:
+                    major_version = int(chrome_version.split('.')[0])
+                    print(f"   🔍 Detected Chrome version: {chrome_version}, using major version: {major_version}")
+                else:
+                    major_version = None
+                    print("   ⚠️  Could not detect Chrome version, trying with no version specified")
+                
                 # Create fresh options to avoid reuse issue
                 options = create_stealth_chrome_options()
-                driver = uc.Chrome(options=options, version_main=136)
+                driver = uc.Chrome(options=options, version_main=major_version)
                 test_results['chrome_creation'] = True
-                print("   ✅ Chrome instance created successfully with version 136")
+                print(f"   ✅ Chrome instance created successfully with detected version {major_version}")
             except Exception as e2:
                 print(f"   ❌ Failed to create Chrome instance: {e2}")
                 return False
